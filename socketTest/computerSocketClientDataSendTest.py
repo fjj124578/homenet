@@ -41,8 +41,21 @@ def singleDataSend(data):
     s.send( binary)
     print("{} is sended".format(data))
     #クライアントとして返信を受ける(受信)
+    
+
+def serialDataSend(dataList):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((SERVER_IP, SERVER_PORT))
+    for i in dataList:
+        print("{:016b}".format(i))
+        binary = i.to_bytes(2,'big')
+        print(binary)
+        s.send( binary)
+        print("{} is sended".format(i))
     msg = s.recv(1024)
     print(msg.decode("utf-8"))
+    
+
 
 
 def make_it_to_bin(a):
@@ -87,10 +100,16 @@ for i in resultList:
 #print(binary)
 #print(type(binary))
 #singleDataSend(0)
+test_list = [83,3450,1700, 450,450, 400,450, 400,1300, 400,1300, 400,450, 450,1250, 450,450, 400,450, 400,450, 450,1200, 450,450, 400,450, 400,1300, 500,350, 450,1250, 500,400, 450,1150, 600,350, 500,350, 500,1100, 600,400, 450,400, 450,400, 450,400, 450,1250, 500,350, 500,1200, 500,350, 500,1200, 500,1200, 500,400, 500,350, 500,350, 500,350, 500,1200, 500,1250, 450,1250, 450,1250, 450,400, 450,400, 500]
+test_list2 =[83,3450,1700, 450,450]
+test_list3 = [3450]
+list_length = len(test_list)
+print(list_length)
+print(type(list_length))
 print("=======================================")
 
+#uint16_t rawData_1[83] = {3450,1700, 450,450, 400,450, 400,1300, 400,1300, 400,450, 450,1250, 450,450, 400,450, 400,450, 450,1200, 450,450, 400,450, 400,1300, 500,350, 450,1250, 500,400, 450,1150, 600,350, 500,350, 500,1100, 600,400, 450,400, 450,400, 450,400, 450,1250, 500,350, 500,1200, 500,350, 500,1200, 500,1200, 500,400, 500,350, 500,350, 500,350, 500,1200, 500,1250, 450,1250, 450,1250, 450,400, 450,400, 500};
 
-test_list = [0,1,2,5,10,100,200,255,256,300,1000,13333]
-for i in test_list:
-    singleDataSend(i)
+
+serialDataSend(test_list)
 #singleDataSend(3000)

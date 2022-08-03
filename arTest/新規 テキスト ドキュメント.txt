@@ -40,40 +40,39 @@ int strToInt(String num){
 
 //一回目の受信関数
 int receiveDataLen(WiFiClient cc){
-      int result;
+  int result;
+  if (cc) {
+      String a[2];
       while (cc.connected()) {
-        int result_two;
-        String a[2];
+        int counter = 0;
         while (cc.available()>0) {
-          int counter = 1;
-          while(counter<=2){
-            byte c = cc.read();   //byteデータ判断をつけます。
-            String temp = String(c,BIN);
-            String zero_temp = strPad(temp,8);
-            a[counter] = zero_temp;
-            counter = counter +1; 
-          }
-          String out_String = a[0]+a[1];
-          int test_result = strToInt(out_String);
-          Serial.print("THE FINAL BIT_DEC_RESULT IS:");
-          Serial.println(test_result);
-          delay(100);
+          byte c = cc.read();   //byteデータ判断をつけます。
+          //Serial.write(c);
+          //Serial.println(c);
+          String temp = String(c,BIN);
+          //Serial.println(temp);
+          String zero_temp = strPad(temp,8);
+          //Serial.println(zero_temp);
+          a[counter] = zero_temp;
+          counter = counter +1; 
         }
-        
+        delay(10);
+        cc.println("Hello From ESP8266x2");
       }
-      
-      //Serial.println("THE FINAL BIT_STRING_RESULT IS:"+ out_String);
-      //int test_result = strToInt(out_String);
-      //Serial.print("THE FINAL BIT_DEC_RESULT IS:");
-     // Serial.println(test_result);
+      String out_String = a[0]+a[1];
+      Serial.println("THE FINAL BIT_STRING_RESULT IS:"+ out_String);
+      int test_result = strToInt(out_String);
+      Serial.print("THE FINAL BIT_DEC_RESULT IS:");
+      Serial.println(test_result);
       cc.stop();
       delay(1);
       Serial.println("Client disconnected");
       delay(1);
       Serial.println("waiting new client");
       delay(1);
-      //result = test_result;
-      //return result;
+      result = test_result;
+    }
+  return result;
 }
 
 //IR情報受信関数(連続)
@@ -102,13 +101,8 @@ void setup() {
 void loop() {
   WiFiClient client = wifiServer.available();
 
-   //int listLen = receiveDataLen(client);
-   if (client) {
-     receiveDataLen(client);
-     //Serial.println(listLen);
-    }
-   
-   
+   int listLen = receiveDataLen(client);
+   Serial.println(listLen);
   
 
 }
