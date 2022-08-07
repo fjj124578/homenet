@@ -51,7 +51,7 @@
     String a[2];
   byte c_1 = client.read();
   byte c_2 = client.read();  
-  delay(10);
+  //delay(10);
   //Serial.println(c_1);
   //Serial.println(c_2);
   String temp = String(c_1,BIN);
@@ -64,16 +64,17 @@
   a[1] = zero_temp_2;
 
   String out_String = a[0]+a[1];
-  Serial.println("THE FINAL BIT_STRING_RESULT IS:"+ out_String);
+  //Serial.println("THE FINAL BIT_STRING_RESULT IS:"+ out_String);
   delay(10);
-  client.println("Hello From ESP8266x2");
+  
   int test_result = strToInt(out_String);
-  Serial.print("THE FINAL BIT_DEC_RESULT IS:");
-  Serial.println(test_result);
+  //Serial.print("THE FINAL BIT_DEC_RESULT IS:");
+  //Serial.println(test_result);
   return test_result;
     }
 
 WiFiServer wifiServer(1235); //サーバーのインスタンスを作成する
+
 
 void setup() {
   Serial.begin(115200);
@@ -99,14 +100,16 @@ void loop() {
   if (client) {
     while (client.connected()) {   //when get a client connection
         int listLen = receiveTwoByte(client);  //get first two bytes (in order to get data len)
-        int rawData[listLen];          // declaration of rawData list
+        client.println("Hello From ESP8266x2");//ACK機能
+        uint16_t rawData[listLen];          // declaration of rawData list
         int counter = 0;           //a counter for [available] loop
         delay(10);
         while (client.available()>0){   //when there is data behind
           int tempIntData = receiveTwoByte(client);    //get next two byte and convert it into int
+          client.println("Hello From ESP8266x2");//ACK機能
           rawData[counter]=tempIntData;            // put int data into rawdata list
           counter = counter + 1;                   //set iterator increment
-          delay(10);
+          //delay(10);
          }
          client.println("受信オッケー");         //sent okay to python
          client.stop();                           //cut connection 
@@ -115,7 +118,8 @@ void loop() {
          delay(10);
          Serial.println("waiting new client");
          delay(10);
-         Serial.println(rawData[0]); 
+
+         
          
        
       } 

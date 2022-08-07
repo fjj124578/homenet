@@ -1,44 +1,58 @@
 #include<ESP8266WiFi.h>
-
+#include <IRsend.h>
+#ifndef UNIT_TEST
+#include <Arduino.h>
+#endif
+#include <IRremoteESP8266.h>
 //常数
-//net work setting para
-const char* ssid = "Buffalo-G-7470";
-const char* password = "5ipjsmgunw55s";
+  //net work setting para
+  const char* ssid = "Buffalo-G-7470";
+  const char* password = "5ipjsmgunw55s";
 
-//0埋め関数定義
-String strPad(String num,int zeroCount){
-  String str = String(num);
-  String returnStr = "";
-  if(zeroCount <= str.length()){
-    return str;
-  }
-  for(int i = 0;i < zeroCount - str.length();i++){
-    returnStr += '0';
-  }
-  return returnStr + str;
-}
-//16文字のSTRINGをintに変換する 
-int strToInt(String num){
-  int result = 0;
-  int k = 0;
-  char one = '1';
-  char zero = '0';
-  for(int i=15;i>=0;i--){
-   int beki = pow(2,k);
-    if(num.charAt(i)==zero){
-      result = result + 0*beki;
+//関数定義
+  //0埋め関数定義
+  String strPad(String num,int zeroCount){
+    /*
+    二進数string numの桁数をzeroCountまで埋める
+    eg 11011→00011011
+    */
+    String str = String(num);
+    String returnStr = "";
+    if(zeroCount <= str.length()){
+      return str;
     }
-    else if(num.charAt(i)==one){
-      result = result + 1*beki;
+    for(int i = 0;i < zeroCount - str.length();i++){
+      returnStr += '0';
+    }
+    return returnStr + str;
+  }
+  
+  //16文字のSTRINGをintに変換する 
+  int strToInt(String num){
+    /*
+    二進数(String)→十進数(int)の変換
+    */
+    int result = 0;
+    int k = 0;
+    char one = '1';
+    char zero = '0';
+    for(int i=15;i>=0;i--){
+     int beki = pow(2,k);
+      if(num.charAt(i)==zero){
+        result = result + 0*beki;
       }
-    k=k+1;
+      else if(num.charAt(i)==one){
+        result = result + 1*beki;
+        }
+      k=k+1;
+      }
+      return result;
     }
-    return result;
-  }
-
-//test func
-int aaa(WiFiClient client){
-  String a[2];
+  
+  //2バイトずつ受信用関数
+  int receiveTwoByte(WiFiClient client){
+    /*２バイトずつ受信して、十進数intに変換して、returnする*/
+    String a[2];
   byte c_1 = client.read();
   byte c_2 = client.read();  
   delay(10);
@@ -54,63 +68,71 @@ int aaa(WiFiClient client){
   a[1] = zero_temp_2;
 
   String out_String = a[0]+a[1];
-  Serial.println("THE FINAL BIT_STRING_RESULT IS:"+ out_String);
+  //Serial.println("THE FINAL BIT_STRING_RESULT IS:"+ out_String);
   delay(10);
-  client.println("Hello From ESP8266x2");
+  
   int test_result = strToInt(out_String);
-  Serial.print("THE FINAL BIT_DEC_RESULT IS:");
-  Serial.println(test_result);
+  //Serial.print("THE FINAL BIT_DEC_RESULT IS:");
+  //Serial.println(test_result);
   return test_result;
-  }
+    }
 
-
-
-WiFiServer wifiServer(1235);
+WiFiServer wifiServer(1235); //サーバーのインスタンスを作成する
+const uint16_t kIrLed = 4;  // ESP8266 GPIO pin to use. Recommended: 4 (D2).
+IRsend irsend(kIrLed);  // Set the GPIO to be used to sending the message.
 
 void setup() {
   Serial.begin(115200);
  
   delay(1000);
+  
+  WiFi.begin(ssid, password);  //set the init of server
  
-  WiFi.begin(ssid, password);
- 
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED) { //await server
     delay(1000);
     Serial.println("Connecting..");
   }
  
-  Serial.print("Connected to WiFi. IP:");
-  Serial.println(WiFi.localIP());
+  Serial.print("Connected to WiFi. IP:");  //connect result out put
+  Serial.println(WiFi.localIP()); //connect result out put
  
-  wifiServer.begin();
+  wifiServer.begin();   //start a server
+  irsend.begin();
+  pinMode(4, OUTPUT);
+  digitalWrite(4, 0);
+  Serial.println("IR transmitor init okay");
 
 }
 
 void loop() {
-  WiFiClient client = wifiServer.available();
+  WiFiClient client = wifiServer.available();   //Gets a client that is connected to the server and has data available for reading. 
   if (client) {
-    while (client.connected()) {
-        int listLen = aaa(client);
-        int rawData[listLen];
-        int counter = 0;
+    while (client.connected()) {   //when get a client connection
+        int listLen = receiveTwoByte(client);  //get first two bytes (in order to get data len)
+        client.println("Hello From ESP8266x2");//ACK機能
+        uint16_t rawData[listLen];          // declaration of rawData list
+        int counter = 0;           //a counter for [available] loop
         delay(10);
-        while (client.available()>0){
-          int tempIntData = aaa(client);
-          rawData[counter]=tempIntData;
-          counter = counter + 1;
+        while (client.available()>0){   //when there is data behind
+          int tempIntData = receiveTwoByte(client);    //get next two byte and convert it into int
+          client.println("Hello From ESP8266x2");//ACK機能
+          rawData[counter]=tempIntData;            // put int data into rawdata list
+          counter = counter + 1;                   //set iterator increment
           //delay(10);
          }
-         client.stop();
+         client.println("受信オッケー");         //sent okay to python
+         client.stop();                           //cut connection 
          delay(10);
          Serial.println("Client disconnected");
          delay(10);
          Serial.println("waiting new client");
          delay(10);
-       Serial.println(rawData[0]);
-       Serial.println(rawData[1]);
-       Serial.println(rawData[2]);
-       Serial.println(rawData[81]);
-       Serial.println(rawData[82]);
+         irsend.sendRaw(rawData,listLen,38);
+         Serial.println("sended");
+         delay(10);
+         
+         
+       
       } 
     }
     
